@@ -248,31 +248,3 @@ client.on('interactionCreate', async interaction => {
 });
 
 client.login(token);
-
-
-// // Wczytaj synonimy z thesaurus.txt dla podanego wyrazu
-//             let thesaurusData = [];
-//             try {
-
-//                 const thesaurusContent = fs.readFileSync('./thesaurus.txt', 'utf8');
-//                 const thesaurusLines = thesaurusContent.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
-//                 thesaurusLines.forEach(line => {
-//                     const [word, ...synonyms] = line.split(';').map(part => part.trim());
-//                     if (word.toLowerCase() === wordToSearch.toLowerCase()) {
-//                         thesaurusData = synonyms.map(syn => syn.trim());
-//                     }
-//                 });
-
-//             } catch(e) {
-//                 console.error('Error loading thesaurus data:', e);
-//                 const embed = [
-//                     new EmbedBuilder()
-//                         .setColor(15277667)
-//                         .setTitle("❌  Nie znaleziono słowa")
-//                         .setDescription("Nie znaleziono słowa `" + wordToSearch +"` w słowniku sjp.pl :( "),
-//                 ];
-
-//                 await interaction.editReply({ embeds: embed, ephemeral: true });
-//                 return;
-
-//             }

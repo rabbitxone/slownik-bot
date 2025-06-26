@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "update-commands": "node commands.js"
+    "build": "node commands.js"
   },
   "author": "Filip Polak",
   "license": "ISC",
