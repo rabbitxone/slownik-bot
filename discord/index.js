@@ -41,7 +41,7 @@ client.on('interactionCreate', async interaction => {
     const { commandName } = interaction;
     if(commandName === 'slowo') {
         
-        let ephemeral = interaction.options.getString('shhh') === 'true' ? true : false;
+        const ephemeral = interaction.options.getString('shhh') === 'true' ? true : false;
 
         await interaction.deferReply({ flags: ephemeral ? 64 : 0 });
         const wordToSearch = interaction.options.getString('slowo').replace(/ /g, '+');
