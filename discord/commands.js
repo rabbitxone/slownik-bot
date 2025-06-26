@@ -15,17 +15,46 @@ const commands = [
             },
             {
                 name: 'shhh',
-                type: 5, // boolean
+                type: 3, // string
                 description: 'Czy odpowiedź ma zostać wysłana tylko do Ciebie?',
                 required: false,
                 choices: [
                     {
                         name: 'Tak, tylko ja chcę widzieć odpowiedź',
-                        value: true
+                        value: 'true'
                     },
                     {
                         name: 'Nie, wyślij odpowiedź na kanał',
-                        value: false
+                        value: 'false'
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        name: 'synonim',
+        description: 'Wyświetla synonimy wybranego wyrazu',
+        options: [
+            {
+                name: 'slowo',
+                type: 3, // string
+                description: 'Słowo, którego synonimy chcesz zobaczyć',
+                required: true,
+                autocomplete: true
+            },
+            {
+                name: 'shhh',
+                type: 3, // string
+                description: 'Czy odpowiedź ma zostać wysłana tylko do Ciebie?',
+                required: false,
+                choices: [
+                    {
+                        name: 'Tak, tylko ja chcę widzieć odpowiedź',
+                        value: 'true'
+                    },
+                    {
+                        name: 'Nie, wyślij odpowiedź na kanał',
+                        value: 'false'
                     }
                 ]
             }
