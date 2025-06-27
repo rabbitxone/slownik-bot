@@ -7,7 +7,7 @@ const fs = require('node:fs');
 
 let localWordIndex = [];
 try {
-    const data = fs.readFileSync('./words.txt', 'utf8');
+    const data = fs.readFileSync('../words.txt', 'utf8');
     localWordIndex = data.split(/\r?\n/).map(word => word.trim()).filter(word => word.length > 0);
     console.log(`Loaded ${localWordIndex.length} words from local index`);
 } catch (err) {
@@ -200,14 +200,14 @@ client.on('interactionCreate', async interaction => {
         await interaction.deferReply({ flags: ephemeral ? 64 : 0 });
         const wordToSearch = interaction.options.getString('slowo');
 
-        let thesaurusData = [];
+        let thesaurusGroups = [];
         try {
-            const thesaurusContent = fs.readFileSync('./thesaurus.txt', 'utf8');
+            const thesaurusContent = fs.readFileSync('../thesaurus.txt', 'utf8');
             const thesaurusLines = thesaurusContent.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
             thesaurusLines.forEach(line => {
                 const [word, ...synonyms] = line.split(';').map(part => part.trim());
                 if (word.toLowerCase() === wordToSearch.toLowerCase()) {
-                    thesaurusData = synonyms.map(syn => syn.trim());
+                    thesaurusGroups.push(synonyms.map(syn => syn.trim()).filter(Boolean));
                 }
             });
 
@@ -224,7 +224,7 @@ client.on('interactionCreate', async interaction => {
             return;
         }
 
-        if(thesaurusData.length === 0) {
+        if(thesaurusGroups.length === 0) {
             const embed = [
                 new EmbedBuilder()
                     .setColor(15277667)
@@ -235,10 +235,17 @@ client.on('interactionCreate', async interaction => {
             await interaction.editReply({ embeds: embed, ephemeral: true });
             return;
         } else {
+            let synonymsText = '';
+            thesaurusGroups.forEach((group, idx) => {
+                if (group.length === 0) return;
+                if (idx > 0) synonymsText += '\n';
+                synonymsText += '• ' + group.join(', ');
+            });
+
             const embed = new EmbedBuilder()
                 .setColor(1752220)
                 .setTitle(`Synonimy słowa: \`${wordToSearch}\``)
-                .setDescription(thesaurusData.join(', '));
+                .setDescription(synonymsText);
 
             await interaction.editReply({ embeds: [embed] });
         }

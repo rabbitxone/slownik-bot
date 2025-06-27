@@ -1,6 +1,7 @@
 const { App } = require('@slack/bolt');
 const axios = require('axios');
 const cheerio = require('cheerio');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = new App({
@@ -172,6 +173,77 @@ app.command('/slowo', async ({ command, ack, respond }) => {
 
     } catch (e) {
         console.error('Error handling /slowo command:', e);
+    }
+});
+
+app.command('/synonim', async ({ command, ack, respond }) => {
+    try {
+        await ack();
+
+        const ephemeral = command.text.toLowerCase().endsWith(' shhh') ? true : false;
+        const wordToSearch = command.text.replace(/ shhh$/, '').trim().replace(/ /g, '+');
+
+        let thesaurusGroups = [];
+
+        try {
+            const thesaurusContent = fs.readFileSync('../thesaurus.txt', 'utf8');
+            const thesaurusLines = thesaurusContent.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+            thesaurusLines.forEach(line => {
+                const [word, ...synonyms] = line.split(';').map(part => part.trim());
+                if (word.toLowerCase() === wordToSearch.toLowerCase()) {
+                    thesaurusGroups.push(synonyms.map(syn => syn.trim()).filter(Boolean));
+                }
+            });
+
+        } catch(e) {
+            console.error('Error loading thesaurus data:', e);
+            await respond({
+                text: 'Nie znaleziono synonimów słowa `' + wordToSearch +'` w słowniku synonimów :(',
+                response_type: 'ephemeral'
+            });
+            return;
+        }
+
+        if(thesaurusGroups.length === 0) {
+            await respond({
+                text: 'Nie znaleziono synonimów słowa `' + wordToSearch +'` w słowniku synonimów :(',
+                response_type: 'ephemeral'
+            });
+            return;
+        } else {
+
+            let blocks = [];
+            blocks.push({
+                type: 'section',
+                text: {
+                    type: 'mrkdwn',
+                    text: `*Synonimy słowa:* \`${wordToSearch}\`\n`
+                }
+            });
+
+            let synonymsText = '';
+            thesaurusGroups.forEach((group, idx) => {
+                if (group.length === 0) return;
+                if (idx > 0) synonymsText += '\n';
+                synonymsText += '• ' + group.join(', ');
+            });
+
+            blocks.push({
+                type: 'section',
+                text: {
+                    type: 'mrkdwn',
+                    text: synonymsText
+                }
+            });
+
+            await respond({
+                blocks: blocks,
+                response_type: ephemeral ? 'ephemeral' : 'in_channel'
+            });
+        }
+        
+    } catch (e) {
+        console.error('Error handling /synonim command:', e);
     }
 });
 
