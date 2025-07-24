@@ -1,11 +1,34 @@
-const { App } = require('@slack/bolt');
+const { App, ExpressReceiver } = require('@slack/bolt');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const fs = require('fs');
 require('dotenv').config();
 
+const receiver = new ExpressReceiver({
+    signingSecret: process.env.SLACK_SIGNING_SECRET,
+    clientId: process.env.SLACK_CLIENT_ID,
+    clientSecret: process.env.SLACK_CLIENT_SECRET,
+    stateSecret: process.env.SLACK_STATE_SECRET,
+    scopes: ['commands', 'chat:write'],
+    installerOptions: {
+        redirectUriPath: '/slack/oauth/callback',
+        redirectUri: process.env.FQDN ? `https://${process.env.FQDN}/slack/oauth/callback` : undefined,
+        callbackOptions: {
+            success: (installation, installOptions, req, res) => {
+                console.log('OAuth success:', installation);
+                res.send('Success! The dictionary bot is now installed.');
+            },
+            failure: (error, installOptions, req, res) => {
+                console.error('OAuth failure:', error);
+                res.send(`Installation failed: ${error.message}`);
+            }
+        }
+    }
+});
+
 const app = new App({
-    token: process.env.SLACK_BOT_TOKEN,
+    receiver,
+    // token: process.env.SLACK_BOT_TOKEN,
     signingSecret: process.env.SLACK_SIGNING_SECRET
 });
 
@@ -23,7 +46,7 @@ app.command('/slowo', async ({ command, ack, respond }) => {
             const { data } = await axios.get(sjpUrl);
             const $ = cheerio.load(data);
 
-            if($('h1').text().includes('✕')) {
+            if ($('h1').text().includes('✕')) {
                 sjpData = {
                     error: '404: The word was not found in the dictionary'
                 }
@@ -97,7 +120,7 @@ app.command('/slowo', async ({ command, ack, respond }) => {
             });
 
 
-            if(results.length > 0) {
+            if (results.length > 0) {
                 sjpData = results;
             } else {
                 sjpData = {
@@ -107,18 +130,18 @@ app.command('/slowo', async ({ command, ack, respond }) => {
 
         } catch (e) {
             console.error('Error fetching word definition:', e);
-            
+
             await respond({
-                text: 'Nie znaleziono słowa `' + wordToSearch +'` w słowniku sjp.pl :(',
+                text: 'Nie znaleziono słowa `' + wordToSearch + '` w słowniku sjp.pl :(',
                 response_type: 'ephemeral'
             });
 
             return;
         }
 
-        if(sjpData.error) {
+        if (sjpData.error) {
             await respond({
-                text: 'Nie znaleziono słowa `' + wordToSearch +'` w słowniku sjp.pl :(',
+                text: 'Nie znaleziono słowa `' + wordToSearch + '` w słowniku sjp.pl :(',
                 response_type: 'ephemeral'
             });
             return;
@@ -138,8 +161,8 @@ app.command('/slowo', async ({ command, ack, respond }) => {
                     text: {
                         type: 'mrkdwn',
                         text: `Dopuszczalne w grach słownych: ${entry.acceptable_in_games ? '✅ TAK' : '❌ NIE'}\n` +
-                              `Odmienne przez przypadki: ${entry.declinable ? '✅ TAK' : '❌ NIE'}\n` +
-                              `Słownik źródłowy: ${entry.sourceDictionary || '*Brak informacji*'}\n`
+                            `Odmienne przez przypadki: ${entry.declinable ? '✅ TAK' : '❌ NIE'}\n` +
+                            `Słownik źródłowy: ${entry.sourceDictionary || '*Brak informacji*'}\n`
                     }
                 });
 
@@ -186,7 +209,7 @@ app.command('/synonim', async ({ command, ack, respond }) => {
         let thesaurusGroups = [];
 
         try {
-            const thesaurusContent = fs.readFileSync('../thesaurus.txt', 'utf8');
+            const thesaurusContent = fs.readFileSync('../../thesaurus.txt', 'utf8');
             const thesaurusLines = thesaurusContent.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
             thesaurusLines.forEach(line => {
                 const [word, ...synonyms] = line.split(';').map(part => part.trim());
@@ -195,18 +218,18 @@ app.command('/synonim', async ({ command, ack, respond }) => {
                 }
             });
 
-        } catch(e) {
+        } catch (e) {
             console.error('Error loading thesaurus data:', e);
             await respond({
-                text: 'Nie znaleziono synonimów słowa `' + wordToSearch +'` w słowniku synonimów :(',
+                text: 'Nie znaleziono synonimów słowa `' + wordToSearch + '` w słowniku synonimów :(',
                 response_type: 'ephemeral'
             });
             return;
         }
 
-        if(thesaurusGroups.length === 0) {
+        if (thesaurusGroups.length === 0) {
             await respond({
-                text: 'Nie znaleziono synonimów słowa `' + wordToSearch +'` w słowniku synonimów :(',
+                text: 'Nie znaleziono synonimów słowa `' + wordToSearch + '` w słowniku synonimów :(',
                 response_type: 'ephemeral'
             });
             return;
@@ -241,7 +264,7 @@ app.command('/synonim', async ({ command, ack, respond }) => {
                 response_type: ephemeral ? 'ephemeral' : 'in_channel'
             });
         }
-        
+
     } catch (e) {
         console.error('Error handling /synonim command:', e);
     }
